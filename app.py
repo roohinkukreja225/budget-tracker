@@ -7,12 +7,12 @@ app = Flask(__name__)
 app.secret_key = "secret123"
 
 # =========================
-# 🔴 RDS DATABASE CONNECTION (EDIT THIS)
+# 🔴 DATABASE CONNECTION
 # =========================
 DB_HOST = "budget-tracker.cvyc226ucci4.ap-south-1.rds.amazonaws.com"
-DB_NAME = "postgres"          # change if you created custom DB
-DB_USER = "postgres"          # your RDS username
-DB_PASS = "roohin225"     # 🔴 PUT YOUR PASSWORD HERE
+DB_NAME = "postgres"
+DB_USER = "postgres"
+DB_PASS = "roohin225"
 DB_PORT = "5432"
 
 def get_connection():
@@ -25,13 +25,14 @@ def get_connection():
     )
 
 # =========================
-# CREATE TABLES
+# CREATE TABLES (FIXED)
 # =========================
 def create_tables():
     try:
         conn = get_connection()
         cur = conn.cursor()
 
+        # EXPENSES
         cur.execute("""
         CREATE TABLE IF NOT EXISTS expenses (
             id SERIAL PRIMARY KEY,
@@ -42,19 +43,30 @@ def create_tables():
         );
         """)
 
+        # SETTINGS (WITH BUDGETS)
         cur.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             id SERIAL PRIMARY KEY,
             salary FLOAT DEFAULT 0,
-            currency VARCHAR(10) DEFAULT 'Rs.'
+            currency VARCHAR(10) DEFAULT 'Rs.',
+            food_budget FLOAT DEFAULT 0,
+            transport_budget FLOAT DEFAULT 0,
+            shopping_budget FLOAT DEFAULT 0,
+            entertainment_budget FLOAT DEFAULT 0
         );
         """)
+
+        # SAFE MIGRATION (VERY IMPORTANT)
+        cur.execute("ALTER TABLE settings ADD COLUMN IF NOT EXISTS food_budget FLOAT DEFAULT 0;")
+        cur.execute("ALTER TABLE settings ADD COLUMN IF NOT EXISTS transport_budget FLOAT DEFAULT 0;")
+        cur.execute("ALTER TABLE settings ADD COLUMN IF NOT EXISTS shopping_budget FLOAT DEFAULT 0;")
+        cur.execute("ALTER TABLE settings ADD COLUMN IF NOT EXISTS entertainment_budget FLOAT DEFAULT 0;")
 
         conn.commit()
         cur.close()
         conn.close()
 
-        print("✅ Tables created successfully")
+        print("✅ Tables ready")
 
     except Exception as e:
         print("❌ DB ERROR:", e)
@@ -87,7 +99,7 @@ def logout():
     return redirect("/")
 
 # =========================
-# DASHBOARD
+# DASHBOARD (FIXED)
 # =========================
 @app.route("/dashboard")
 def dashboard():
@@ -99,32 +111,43 @@ def dashboard():
     cur = conn.cursor()
 
     # =========================
-    # SETTINGS FETCH
+    # SETTINGS FETCH (FIXED)
     # =========================
-    # =========================
-# SETTINGS FETCH
-# =========================
-    cur.execute("SELECT salary, currency, food_budget, transport_budget, shopping_budget, entertainment_budget FROM settings LIMIT 1")
+    cur.execute("""
+        SELECT salary, currency,
+               food_budget, transport_budget,
+               shopping_budget, entertainment_budget
+        FROM settings
+        LIMIT 1
+    """)
     row = cur.fetchone()
 
     if row:
         income = float(row[0]) if row[0] else 15000
         currency = row[1] if row[1] else "₹"
+
+        food_budget = float(row[2]) if row[2] else 0
+        transport_budget = float(row[3]) if row[3] else 0
+        shopping_budget = float(row[4]) if row[4] else 0
+        entertainment_budget = float(row[5]) if row[5] else 0
     else:
         income = 15000
         currency = "₹"
 
-    # ✅ ALWAYS define settings here (outside if-else)
+        food_budget = 0
+        transport_budget = 0
+        shopping_budget = 0
+        entertainment_budget = 0
+
     settings = {
         "salary": income,
         "currency": currency,
-        # "food_budget": row[2],
-        # "transport_budget": row[3],
-        # "shopping_budget": row[4],
-        # "entertainment_budget": row[5]
+        "food_budget": food_budget,
+        "transport_budget": transport_budget,
+        "shopping_budget": shopping_budget,
+        "entertainment_budget": entertainment_budget
     }
-  
-    
+
     # =========================
     # EXPENSES FETCH
     # =========================
@@ -217,14 +240,14 @@ def dashboard():
     } for e in expenses[:5]]
 
     # =========================
-    # PERCENTAGES
+    # PERCENTAGES (FIXED CORE)
     # =========================
     def percent(part, total):
         return int((part / total) * 100) if total > 0 else 0
 
-    food_percent = percent(food, total_expense)
-    transport_percent = percent(transport, total_expense)
-    shopping_percent = percent(shopping, total_expense)
+    food_percent = percent(food, food_budget)
+    transport_percent = percent(transport, transport_budget)
+    shopping_percent = percent(shopping, shopping_budget)
 
     cur.close()
     conn.close()
@@ -296,7 +319,7 @@ def add_expense():
     return render_template("add_expense.html")
 
 # =========================
-# SETTINGS
+# SETTINGS (UNCHANGED)
 # =========================
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
@@ -307,9 +330,6 @@ def settings():
     conn = get_connection()
     cur = conn.cursor()
 
-    # =========================
-    # ENSURE SINGLE ROW EXISTS
-    # =========================
     cur.execute("SELECT * FROM settings LIMIT 1")
     if not cur.fetchone():
         cur.execute("""
@@ -319,44 +339,23 @@ def settings():
         """)
         conn.commit()
 
-    # =========================
-    # HANDLE POST
-    # =========================
     if request.method == "POST":
 
         form_type = request.form.get("form_type")
 
-        # =========================
-        # UPDATE SALARY
-        # =========================
         if form_type == "salary":
             income = request.form.get("income")
-
             if income:
-                cur.execute(
-                    "UPDATE settings SET salary = %s",
-                    (float(income),)
-                )
+                cur.execute("UPDATE settings SET salary = %s", (float(income),))
                 conn.commit()
 
-        # =========================
-        # UPDATE CURRENCY
-        # =========================
         elif form_type == "currency":
             currency = request.form.get("currency")
-
             if currency:
-                cur.execute(
-                    "UPDATE settings SET currency = %s",
-                    (currency,)
-                )
+                cur.execute("UPDATE settings SET currency = %s", (currency,))
                 conn.commit()
 
-        # =========================
-        # UPDATE BUDGETS
-        # =========================
         elif form_type == "budget":
-
             food = request.form.get("food_budget") or 0
             transport = request.form.get("transport_budget") or 0
             shopping = request.form.get("shopping_budget") or 0
@@ -368,18 +367,10 @@ def settings():
                     transport_budget = %s,
                     shopping_budget = %s,
                     entertainment_budget = %s
-            """, (
-                float(food),
-                float(transport),
-                float(shopping),
-                float(entertainment)
-            ))
+            """, (float(food), float(transport), float(shopping), float(entertainment)))
 
             conn.commit()
 
-    # =========================
-    # FETCH UPDATED SETTINGS
-    # =========================
     cur.execute("""
         SELECT salary, currency,
                food_budget, transport_budget,
@@ -403,6 +394,7 @@ def settings():
     conn.close()
 
     return render_template("settings.html", settings=settings)
+
 # =========================
 # RUN
 # =========================
