@@ -119,6 +119,7 @@ def dashboard():
         "salary": income,
         "currency": currency
     }
+    
     # =========================
     # EXPENSES FETCH
     # =========================
