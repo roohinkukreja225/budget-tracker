@@ -118,10 +118,10 @@ def dashboard():
     settings = {
         "salary": income,
         "currency": currency,
-        "food_budget": row[2],
-        "transport_budget": row[3],
-        "shopping_budget": row[4],
-        "entertainment_budget": row[5]
+        # "food_budget": row[2],
+        # "transport_budget": row[3],
+        # "shopping_budget": row[4],
+        # "entertainment_budget": row[5]
     }
   
     
@@ -222,9 +222,9 @@ def dashboard():
     def percent(part, total):
         return int((part / total) * 100) if total > 0 else 0
 
-    food_percent = percent(food, food_budget)
-    transport_percent = percent(transport, transport_budget)
-    shopping_percent = percent(shopping, shopping_budget)
+    food_percent = percent(food, total_expense)
+    transport_percent = percent(transport, total_expense)
+    shopping_percent = percent(shopping, total_expense)
 
     cur.close()
     conn.close()
