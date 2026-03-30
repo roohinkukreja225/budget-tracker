@@ -118,11 +118,12 @@ def dashboard():
     settings = {
         "salary": income,
         "currency": currency,
-        "food_budget": food_budget,
-        "transport_budget": transport_budget,
-        "shopping_budget": shopping_budget,
-        "entertainment_budget": entertainment_budget,
+        "food_budget": row[2],
+        "transport_budget": row[3],
+        "shopping_budget": row[4],
+        "entertainment_budget": row[5]
     }
+  
     
     # =========================
     # EXPENSES FETCH
