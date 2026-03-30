@@ -104,7 +104,7 @@ def dashboard():
     # =========================
 # SETTINGS FETCH
 # =========================
-    cur.execute("SELECT salary, currency FROM settings LIMIT 1")
+    cur.execute("SELECT salary, currency, food_budget, transport_budget, shopping_budget, entertainment_budget FROM settings LIMIT 1")
     row = cur.fetchone()
 
     if row:
@@ -117,7 +117,11 @@ def dashboard():
     # ✅ ALWAYS define settings here (outside if-else)
     settings = {
         "salary": income,
-        "currency": currency
+        "currency": currency,
+        "food_budget": food_budget,
+        "transport_budget": transport_budget,
+        "shopping_budget": shopping_budget,
+        "entertainment_budget": entertainment_budget,
     }
     
     # =========================
@@ -217,9 +221,9 @@ def dashboard():
     def percent(part, total):
         return int((part / total) * 100) if total > 0 else 0
 
-    food_percent = percent(food, total_expense)
-    transport_percent = percent(transport, total_expense)
-    shopping_percent = percent(shopping, total_expense)
+    food_percent = percent(food, food_budget)
+    transport_percent = percent(transport, transport_budget)
+    shopping_percent = percent(shopping, shopping_budget)
 
     cur.close()
     conn.close()
