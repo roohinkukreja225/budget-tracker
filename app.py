@@ -301,6 +301,21 @@ def settings():
     conn = get_connection()
     cur = conn.cursor()
 
+    # =========================
+    # ENSURE SINGLE ROW EXISTS
+    # =========================
+    cur.execute("SELECT * FROM settings LIMIT 1")
+    if not cur.fetchone():
+        cur.execute("""
+            INSERT INTO settings 
+            (salary, currency, food_budget, transport_budget, shopping_budget, entertainment_budget)
+            VALUES (15000, '₹', 0, 0, 0, 0)
+        """)
+        conn.commit()
+
+    # =========================
+    # HANDLE POST
+    # =========================
     if request.method == "POST":
 
         form_type = request.form.get("form_type")
@@ -312,16 +327,9 @@ def settings():
             income = request.form.get("income")
 
             if income:
-                income = float(income)
-
-                cur.execute("SELECT currency FROM settings LIMIT 1")
-                row = cur.fetchone()
-                currency = row[0] if row else "₹"
-
-                cur.execute("DELETE FROM settings")
                 cur.execute(
-                    "INSERT INTO settings (salary, currency) VALUES (%s, %s)",
-                    (income, currency)
+                    "UPDATE settings SET salary = %s",
+                    (float(income),)
                 )
                 conn.commit()
 
@@ -331,41 +339,64 @@ def settings():
         elif form_type == "currency":
             currency = request.form.get("currency")
 
-            cur.execute("SELECT salary FROM settings LIMIT 1")
-            row = cur.fetchone()
-            income = row[0] if row else 15000
+            if currency:
+                cur.execute(
+                    "UPDATE settings SET currency = %s",
+                    (currency,)
+                )
+                conn.commit()
 
-            cur.execute("DELETE FROM settings")
-            cur.execute(
-                "INSERT INTO settings (salary, currency) VALUES (%s, %s)",
-                (income, currency)
-            )
+        # =========================
+        # UPDATE BUDGETS
+        # =========================
+        elif form_type == "budget":
+
+            food = request.form.get("food_budget") or 0
+            transport = request.form.get("transport_budget") or 0
+            shopping = request.form.get("shopping_budget") or 0
+            entertainment = request.form.get("entertainment_budget") or 0
+
+            cur.execute("""
+                UPDATE settings
+                SET food_budget = %s,
+                    transport_budget = %s,
+                    shopping_budget = %s,
+                    entertainment_budget = %s
+            """, (
+                float(food),
+                float(transport),
+                float(shopping),
+                float(entertainment)
+            ))
+
             conn.commit()
 
     # =========================
-    # FETCH SETTINGS
+    # FETCH UPDATED SETTINGS
     # =========================
-    cur.execute("SELECT salary, currency FROM settings LIMIT 1")
+    cur.execute("""
+        SELECT salary, currency,
+               food_budget, transport_budget,
+               shopping_budget, entertainment_budget
+        FROM settings
+        LIMIT 1
+    """)
+
     row = cur.fetchone()
 
-    if row:
-        income = row[0]
-        currency = row[1]
-    else:
-        income = 15000
-        currency = "₹"
-
     settings = {
-        "salary": income,
-        "currency": currency
+        "salary": row[0],
+        "currency": row[1],
+        "food_budget": row[2],
+        "transport_budget": row[3],
+        "shopping_budget": row[4],
+        "entertainment_budget": row[5]
     }
 
     cur.close()
     conn.close()
 
-    return render_template("settings.html",
-                           settings=settings,
-                           income=income)
+    return render_template("settings.html", settings=settings)
 # =========================
 # RUN
 # =========================

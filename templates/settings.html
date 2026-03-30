@@ -36,7 +36,7 @@
 
     <div class="row g-4">
 
-        <!-- Profile (STATIC as per your requirement) -->
+        <!-- Profile -->
         <div class="col-md-6">
             <div class="card shadow border-0">
                 <div class="card-body">
@@ -56,25 +56,20 @@
             </div>
         </div>
 
-    
-
-        <!-- Currency (CONNECTED TO DB) -->
+        <!-- Currency -->
         <div class="col-md-6">
             <div class="card shadow border-0">
                 <div class="card-body">
                     <h5 class="mb-3">Currency</h5>
 
                     <form method="POST" action="/settings">
-
                         <input type="hidden" name="form_type" value="currency">
 
                         <select class="form-select" name="currency">
-
                             <option value="₹" {% if settings.currency == "₹" %}selected{% endif %}>₹ INR</option>
                             <option value="$" {% if settings.currency == "$" %}selected{% endif %}>$ USD</option>
                             <option value="€" {% if settings.currency == "€" %}selected{% endif %}>€ EUR</option>
                             <option value="£" {% if settings.currency == "£" %}selected{% endif %}>£ GBP</option>
-
                         </select>
 
                         <br>
@@ -82,21 +77,19 @@
                         <button class="btn btn-primary">
                             Save Currency
                         </button>
-
                     </form>
 
                 </div>
             </div>
         </div>
 
-        <!-- Monthly Salary (INCOME - CONNECTED TO DB) -->
+        <!-- Salary -->
         <div class="col-md-6">
             <div class="card shadow border-0">
                 <div class="card-body">
                     <h5 class="mb-3">Monthly Salary</h5>
 
                     <form method="POST" action="/settings">
-
                         <input type="hidden" name="form_type" value="salary">
 
                         <div class="input-group mb-3">
@@ -105,48 +98,61 @@
                             <input type="number"
                                    name="income"
                                    class="form-control"
-                                   value="{{income}}"
+                                   value="{{settings.salary}}"
                                    required>
                         </div>
 
                         <button class="btn btn-success">
                             Update Salary
                         </button>
-
                     </form>
 
                 </div>
             </div>
         </div>
 
-        <!-- Budget Limits (UI ONLY - optional future DB) -->
+        <!-- Budget Limits (CONNECTED) -->
         <div class="col-md-12">
             <div class="card shadow border-0">
                 <div class="card-body">
                     <h5 class="mb-3">Monthly Budget Limits</h5>
 
-                    <form>
+                    <form method="POST" action="/settings">
+
+                        <input type="hidden" name="form_type" value="budget">
 
                         <div class="row g-3">
 
                             <div class="col-md-3">
                                 <label>Food</label>
-                                <input class="form-control" type="number" placeholder="500">
+                                <input class="form-control"
+                                       type="number"
+                                       name="food_budget"
+                                       value="{{ settings.food_budget or 0 }}">
                             </div>
 
                             <div class="col-md-3">
                                 <label>Transport</label>
-                                <input class="form-control" type="number" placeholder="200">
+                                <input class="form-control"
+                                       type="number"
+                                       name="transport_budget"
+                                       value="{{ settings.transport_budget or 0 }}">
                             </div>
 
                             <div class="col-md-3">
                                 <label>Shopping</label>
-                                <input class="form-control" type="number" placeholder="300">
+                                <input class="form-control"
+                                       type="number"
+                                       name="shopping_budget"
+                                       value="{{ settings.shopping_budget or 0 }}">
                             </div>
 
                             <div class="col-md-3">
                                 <label>Entertainment</label>
-                                <input class="form-control" type="number" placeholder="150">
+                                <input class="form-control"
+                                       type="number"
+                                       name="entertainment_budget"
+                                       value="{{ settings.entertainment_budget or 0 }}">
                             </div>
 
                         </div>
@@ -163,7 +169,7 @@
             </div>
         </div>
 
-        <!-- Notifications (UI only) -->
+        <!-- Notifications -->
         <div class="col-md-6">
             <div class="card shadow border-0">
                 <div class="card-body">
